@@ -35,3 +35,13 @@ next-env.d.ts
 
 # idea
 .idea
+
+# python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+.env
