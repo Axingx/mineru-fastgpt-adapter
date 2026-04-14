@@ -10,7 +10,7 @@ services:
       - "3333:3333"
     environment:
       - MINERU_API_URL=https://xxxx/file_parse # your local mineru api url
-      - MINERU_BACKEND=vlm-vllm-async-engine
+      - MINERU_BACKEND=hybrid-auto-engine # hybrid-auto-engine vlm-vllm-async-engine
       - PUBLIC_BASE_URL=http://127.0.0.1:3333/mineru_images
     volumes:
       - ./mineru_temp_images:/app/temp_images

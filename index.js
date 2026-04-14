@@ -107,6 +107,10 @@ app.post("/mineru_parse", upload.single("file"), async (req, res) => {
   }
 });
 
-app.listen(port, "0.0.0.0", () => {
+const server = app.listen(port, "0.0.0.0", () => {
   console.log(`MinerU Structured Adapter listening at http://0.0.0.0:${port}`);
 });
+
+server.timeout = 600000;
+server.keepAliveTimeout = 650000;
+server.headersTimeout = 660000;
