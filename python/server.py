@@ -4,6 +4,7 @@ MinerU Structured Adapter - Python
 
 import asyncio
 import base64
+import logging
 import os
 import re
 import urllib.parse
@@ -13,10 +14,17 @@ from pathlib import Path
 
 import aiofiles
 import aiohttp
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+
+# ── 日志配置 ──────────────────────────────────────────────────────────
+logger = logging.getLogger("mineru-adapter")
+logger.setLevel(logging.INFO)
+_handler = logging.StreamHandler()
+_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
+logger.addHandler(_handler)
 
 # ── 配置 ──────────────────────────────────────────────────────────────
 MINERU_API_URL = os.getenv("MINERU_API_URL",  "http://localhost:8080/parse")
@@ -150,7 +158,7 @@ async def parse_document(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="No file uploaded")
 
     task_id = str(uuid.uuid4())
-    print(f"[{task_id}] Start processing: {file.filename}")
+    logger.info(f"[{task_id}] Start processing: {file.filename}")
 
     try:
         file_bytes = await file.read()
@@ -171,7 +179,7 @@ async def parse_document(file: UploadFile = File(...)):
         final_markdown = "\n\n".join(md for md, _ in processed).strip()
         total_pages = sum(p for _, p in processed)
 
-        print(f"[{task_id}] Success. pages={total_pages}")
+        logger.info(f"[{task_id}] Success. pages={total_pages}")
         return JSONResponse({
             "success":  True,
             "markdown": final_markdown,
@@ -180,7 +188,7 @@ async def parse_document(file: UploadFile = File(...)):
 
     except aiohttp.ClientResponseError as e:
         # MinerU 返回非 2xx
-        print(f"[{task_id}] MinerU HTTP Error: {e.status} {e.message}")
+        logger.error(f"[{task_id}] MinerU HTTP Error: {e.status} {e.message}")
         return JSONResponse(
             {"success": False, "markdown": "", "pages": 0,
              "error": f"MinerU API error {e.status}: {e.message}"},
@@ -188,14 +196,14 @@ async def parse_document(file: UploadFile = File(...)):
         )
     except aiohttp.ClientError as e:
         # 网络连接错误
-        print(f"[{task_id}] MinerU Connection Error: {e}")
+        logger.error(f"[{task_id}] MinerU Connection Error: {e}")
         return JSONResponse(
             {"success": False, "markdown": "", "pages": 0,
              "error": f"MinerU connection error: {e}"},
             status_code=502,
         )
     except Exception as e:
-        print(f"[{task_id}] Adapter Error: {e}")
+        logger.error(f"[{task_id}] Adapter Error: {e}")
         return JSONResponse(
             {"success": False, "markdown": "", "pages": 0, "error": str(e)},
             status_code=500,
@@ -211,6 +219,19 @@ async def health_check():
 # ── 入口 ──────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     import uvicorn
+
+    # 隐藏 /mineru_images 的访问日志
+    class NoImageAccessLog(logging.Filter):
+        def filter(self, record: logging.LogRecord) -> bool:
+            # uvicorn access log 格式: <method> <path> <status>
+            # 过滤掉 /mineru_images 的请求
+            if hasattr(record, "path") and str(record.path).startswith("/mineru_images"):
+                return False
+            return True
+
+    access_log = logging.getLogger("uvicorn.access")
+    access_log.addFilter(NoImageAccessLog())
+
     uvicorn.run(
         "server:app",
         host="0.0.0.0",
