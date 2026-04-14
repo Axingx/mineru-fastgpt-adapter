@@ -22,9 +22,15 @@ from fastapi.staticfiles import StaticFiles
 # ── 日志配置 ──────────────────────────────────────────────────────────
 logger = logging.getLogger("mineru-adapter")
 logger.setLevel(logging.INFO)
-_handler = logging.StreamHandler()
-_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
-logger.addHandler(_handler)
+
+logger.propagate = False
+
+if not logger.handlers:
+    _handler = logging.StreamHandler()
+    # 这里的格式可以根据你的喜好调整
+    _handler.setFormatter(logging.Formatter(
+        "%(asctime)s [%(levelname)s] %(message)s"))
+    logger.addHandler(_handler)
 
 # ── 配置 ──────────────────────────────────────────────────────────────
 MINERU_API_URL = os.getenv("MINERU_API_URL",  "http://localhost:8080/parse")
