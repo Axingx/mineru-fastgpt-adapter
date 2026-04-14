@@ -219,19 +219,6 @@ async def health_check():
 # ── 入口 ──────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     import uvicorn
-
-    # 隐藏 /mineru_images 的访问日志
-    class NoImageAccessLog(logging.Filter):
-        def filter(self, record: logging.LogRecord) -> bool:
-            # uvicorn access log 格式: <method> <path> <status>
-            # 过滤掉 /mineru_images 的请求
-            if hasattr(record, "path") and str(record.path).startswith("/mineru_images"):
-                return False
-            return True
-
-    access_log = logging.getLogger("uvicorn.access")
-    access_log.addFilter(NoImageAccessLog())
-
     uvicorn.run(
         "server:app",
         host="0.0.0.0",
@@ -239,4 +226,5 @@ if __name__ == "__main__":
         loop="uvloop",
         workers=4,
         timeout_keep_alive=650,
+        access_log=False,
     )
