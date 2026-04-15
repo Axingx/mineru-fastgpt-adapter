@@ -112,7 +112,9 @@ async def process_single_file(
     pages:  int = content.get("pages", 1)
 
     safe_folder = sanitize_filename(Path(original_filename).stem)
-    target_folder = BASE_IMAGE_DIR / task_id / safe_folder
+    # 按天分组，兼容旧版已解析的文件目录（旧版直接是 temp_images/<task_id>/<safe_folder>）
+    date_str = datetime.now().strftime("%Y-%m-%d")
+    target_folder = BASE_IMAGE_DIR / date_str / task_id / safe_folder
 
     # mkdir 是同步调用，用 run_in_executor 避免阻塞事件循环
     loop = asyncio.get_running_loop()
@@ -131,7 +133,8 @@ async def process_single_file(
     for img_name, b64_data in images.items():
         img_path = target_folder / img_name
         target_url = (
-            f"{PUBLIC_BASE_URL}/{task_id}"
+            f"{PUBLIC_BASE_URL}/{date_str}"
+            f"/{task_id}"
             f"/{encode_uri_component(safe_folder)}"
             f"/{encode_uri_component(img_name)}"
         )
