@@ -2,19 +2,19 @@ version: "3.8"
 
 services:
   # Node.js 版本
-  mineru-adapter-node:
-    image: mineru-adapter:v1.1
-    build: ./node
-    container_name: mineru-adapter-node
-    restart: always
-    ports:
-      - "3333:3333"
-    environment:
-      - MINERU_API_URL=https://xxxx/file_parse
-      - MINERU_BACKEND=hybrid-auto-engine
-      - PUBLIC_BASE_URL=http://127.0.0.1:3333/mineru_images
-    volumes:
-      - ./mineru_temp_images:/app/temp_images
+  # mineru-adapter-node:
+  #   image: mineru-adapter:v1.1
+  #   build: ./node
+  #   container_name: mineru-adapter-node
+  #   restart: always
+  #   ports:
+  #     - "3333:3333"
+  #   environment:
+  #     - MINERU_API_URL=https://xxxx/file_parse
+  #     - MINERU_BACKEND=hybrid-auto-engine
+  #     - PUBLIC_BASE_URL=http://127.0.0.1:3333/mineru_images
+  #   volumes:
+  #     - ./mineru_temp_images:/app/temp_images
 
   # Python 版本
   mineru-adapter-python:
@@ -22,6 +22,7 @@ services:
     build: ./python
     container_name: mineru-adapter-python
     restart: always
+    user: "1000:1000"
     ports:
       - "3334:3333"
     environment:
