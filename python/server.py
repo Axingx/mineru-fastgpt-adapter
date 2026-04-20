@@ -38,6 +38,8 @@ MINERU_API_URL = os.getenv("MINERU_API_URL",  "http://localhost:8080/parse")
 PUBLIC_BASE_URL = os.getenv(
     "PUBLIC_BASE_URL", "http://localhost:3333/mineru_images")
 MINERU_BACKEND = os.getenv("MINERU_BACKEND",  "vlm-vllm-async-engine")
+MINERU_ENABLE_PAGE_HEADER = os.getenv(
+    "MINERU_ENABLE_PAGE_HEADER", "false").lower() == "true"
 BASE_IMAGE_DIR = Path(__file__).parent / "temp_images"
 PORT = 3333
 
@@ -93,6 +95,8 @@ async def call_mineru_api(file_bytes: bytes, filename: str) -> dict:
     form_data.add_field("files",         file_bytes, filename=filename)
     form_data.add_field("backend",       MINERU_BACKEND)
     form_data.add_field("return_images", "true")
+    if MINERU_ENABLE_PAGE_HEADER:
+        form_data.add_field("return_model_output", "true")
 
     timeout = aiohttp.ClientTimeout(total=600)
     async with aiohttp.ClientSession(timeout=timeout) as session:
@@ -209,6 +213,7 @@ async def parse_document(file: UploadFile = File(...)):
             if first_header:
                 break
 
+        logger.info(f"[{task_id}] header content={first_header}")
         final_markdown = (
             (first_header + "\n\n" if first_header else "")
             + "\n\n".join(md for md, _ in processed).strip()

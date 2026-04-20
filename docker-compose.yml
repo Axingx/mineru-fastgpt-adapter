@@ -29,5 +29,6 @@ services:
       - MINERU_API_URL=https://xxxx/file_parse
       - MINERU_BACKEND=vlm-auto-engine
       - PUBLIC_BASE_URL=http://127.0.0.1:3334/mineru_images
+      - MINERU_ENABLE_PAGE_HEADER=true
     volumes:
       - ./mineru_temp_images:/app/temp_images
