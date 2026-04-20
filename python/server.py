@@ -6,6 +6,7 @@ import asyncio
 import base64
 import logging
 import os
+import json
 import re
 import urllib.parse
 import uuid
@@ -102,6 +103,22 @@ async def call_mineru_api(file_bytes: bytes, filename: str) -> dict:
 
 # ── 核心处理 ──────────────────────────────────────────────────────────
 
+def extract_headers(content: dict) -> str:
+    """从 model_output 中提取第一个 type="header" 的 content"""
+    model_output_str = content.get("model_output", "")
+    if not model_output_str:
+        return ""
+    try:
+        mo = json.loads(model_output_str)
+    except Exception:
+        return ""
+    for page in mo:
+        for item in page:
+            if isinstance(item, dict) and item.get("type") == "header":
+                return item.get("content", "").strip()
+    return ""
+
+
 async def process_single_file(
     task_id: str,
     original_filename: str,
@@ -185,7 +202,17 @@ async def parse_document(file: UploadFile = File(...)):
             for fname, content in results_data.items()
         ])
 
-        final_markdown = "\n\n".join(md for md, _ in processed).strip()
+        # 提取第一个 header，拼接到 markdown 开头
+        first_header = ""
+        for fname, content in results_data.items():
+            first_header = extract_headers(content)
+            if first_header:
+                break
+
+        final_markdown = (
+            (first_header + "\n\n" if first_header else "")
+            + "\n\n".join(md for md, _ in processed).strip()
+        ).strip()
         total_pages = sum(p for _, p in processed)
 
         logger.info(f"[{task_id}] Success. pages={total_pages}")
