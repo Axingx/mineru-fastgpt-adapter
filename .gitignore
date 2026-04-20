@@ -45,3 +45,5 @@ __pycache__/
 venv/
 ENV/
 .env
+
+/mineru_temp_images
