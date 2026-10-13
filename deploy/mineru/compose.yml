@@ -1,0 +1,42 @@
+services:
+  mineru-router:
+    image: mineru:4.0.12
+    build: .
+    container_name: mineru-router
+    restart: always
+    ports:
+      - "8002:8002"
+    environment:
+      MINERU_MODEL_SOURCE: local
+      MINERU_MODEL_SMALL_BACKEND: torch
+      MINERU_MODEL_VLM_ENGINE: vllm
+    command:
+      - router
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8002"
+      - --local-gpus
+      - auto
+      - --worker-tier
+      - standard
+      - --worker-concurrency
+      - "1"
+      - --preload-models
+    ipc: host
+    ulimits:
+      memlock: -1
+      stack: 67108864
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8002/v1/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 900s
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["0"]
+              capabilities: [gpu]

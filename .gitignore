@@ -47,3 +47,5 @@ ENV/
 .env
 
 /mineru_temp_images
+/src/temp_images/
+/deploy/mineru_temp_images/

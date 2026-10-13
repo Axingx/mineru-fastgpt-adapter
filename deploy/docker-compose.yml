@@ -1,6 +1,6 @@
 services:
   mineru-adapter-python:
-    image: mineru-adapter-python:v1.0
+    image: mineru-adapter-python:4.x
     build: ../
     container_name: mineru-adapter-python
     restart: always
